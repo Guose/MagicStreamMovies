@@ -25,8 +25,6 @@ type SignedDetails struct {
 var SECRET_KEY string = os.Getenv("SECRET_KEY")
 var SECRET_REFRESH_KEY string = os.Getenv("SECRET_REFRESH_KEY")
 
-var userCollection *mongo.Collection = database.OpenCollection("users")
-
 func GenerateAllTokens(email, firstName, lastName, role, userID string) (string, string, error) {
 	claims := &SignedDetails{
 		Email:     email,
@@ -71,8 +69,8 @@ func GenerateAllTokens(email, firstName, lastName, role, userID string) (string,
 	return signedToken, signedRefreshToken, nil
 }
 
-func UpdateAllTokens(signedToken, signedRefreshToken, userID string) error {
-	var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
+func UpdateAllTokens(signedToken, signedRefreshToken, userID string, client *mongo.Client, c *gin.Context) error {
+	var ctx, cancel = context.WithTimeout(c, 100*time.Second)
 	defer cancel()
 
 	updateAt, _ := time.Parse(time.RFC3339, time.Now().Format(time.RFC3339))
@@ -84,6 +82,9 @@ func UpdateAllTokens(signedToken, signedRefreshToken, userID string) error {
 			"updated_at":    updateAt,
 		},
 	}
+
+	var userCollection *mongo.Collection = database.OpenCollection("users", client)
+
 	_, err := userCollection.UpdateOne(ctx, bson.M{"user_id": userID}, updateObj)
 	if err != nil {
 		return err
@@ -156,4 +157,26 @@ func GetRoleFromContext(c *gin.Context) (string, error) {
 	}
 
 	return roleStr, nil
+}
+
+func ValidateRefreshToken(tokenString string) (*SignedDetails, error) {
+	claims := &SignedDetails{}
+	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+
+		return []byte(SECRET_REFRESH_KEY), nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+		return nil, err
+	}
+
+	if claims.ExpiresAt.Time.Before(time.Now()) {
+		return nil, errors.New("refresh token has expired")
+	}
+
+	return claims, nil
 }

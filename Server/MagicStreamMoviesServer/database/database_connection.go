@@ -10,8 +10,6 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
-var Client *mongo.Client = Connect()
-
 func Connect() *mongo.Client {
 	err := godotenv.Load(".env")
 
@@ -27,6 +25,7 @@ func Connect() *mongo.Client {
 	fmt.Println("Connecting to MongoDB at:", mongoDb)
 
 	clientOptions := options.Client().ApplyURI(mongoDb)
+
 	client, err := mongo.Connect(clientOptions)
 	if err != nil {
 		return nil
@@ -35,7 +34,7 @@ func Connect() *mongo.Client {
 	return client
 }
 
-func OpenCollection(collectionName string) *mongo.Collection {
+func OpenCollection(collectionName string, client *mongo.Client) *mongo.Collection {
 	err := godotenv.Load(".env")
 	if err != nil {
 		log.Println("Warning: unable to fund .env file.")
@@ -45,7 +44,7 @@ func OpenCollection(collectionName string) *mongo.Collection {
 
 	fmt.Println("DATABASE_NAME: ", databaseName)
 
-	collection := Client.Database(databaseName).Collection(collectionName)
+	collection := client.Database(databaseName).Collection(collectionName)
 
 	if collection == nil {
 		return nil
