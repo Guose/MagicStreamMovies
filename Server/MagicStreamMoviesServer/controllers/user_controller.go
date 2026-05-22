@@ -62,9 +62,9 @@ func RegisterUser(client *mongo.Client) gin.HandlerFunc {
 		}
 
 		user.UserID = bson.NewObjectID().Hex()
-		user.Password = hashedPassword
 		user.CreatedAt = time.Now()
 		user.UpdatedAt = time.Now()
+		user.Password = hashedPassword
 
 		result, err := userCollection.InsertOne(ctx, user)
 		if err != nil {
