@@ -3,7 +3,11 @@ import axiosClient from "../../api/axiosConfig"
 import Movies from '../movies/Movies'
 import type { MovieModel } from "../../models/movieModel"
 
-const Home = () => {
+type HomeProps = {
+    updateMovieReview: (imdb_id: string) => void
+}
+
+const Home = ({ updateMovieReview }: HomeProps) => {
     const [movies, setMovies] = useState<MovieModel[]>([])
     const [loading, setLoading] = useState<boolean>(false)
     const [message, setMessage] = useState<string>('Loading...')
@@ -34,7 +38,7 @@ const Home = () => {
             {loading ? (
                 <h2>{message}</h2>
             ) : (
-                <Movies movies={movies} message={message} />
+                <Movies movies={movies} message={message} updateMovieReview={updateMovieReview} />
             )}
         </div>
     )

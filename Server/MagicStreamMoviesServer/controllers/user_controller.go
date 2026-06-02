@@ -203,7 +203,7 @@ func RefreshTokenHandler(client *mongo.Client) gin.HandlerFunc {
 		var ctx, cancel = context.WithTimeout(c, 100*time.Second)
 		defer cancel()
 
-		refreshToken, err := c.Cookie("Authorization")
+		refreshToken, err := c.Cookie("refresh_token")
 
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Refresh token not provided in cookie"})
@@ -236,6 +236,6 @@ func RefreshTokenHandler(client *mongo.Client) gin.HandlerFunc {
 		c.SetCookie("access_token", newToken, 86400, "/", "localhost", true, true)          //expires in 1 day
 		c.SetCookie("refresh_token", newRefreshToken, 604800, "/", "localhost", true, true) //expires in 7 days
 
-		c.JSON(http.StatusOK, gin.H{"message": "Tokens refreshed"})
+		c.JSON(http.StatusOK, gin.H{"token": newToken})
 	}
 }
